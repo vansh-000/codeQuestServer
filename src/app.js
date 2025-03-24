@@ -9,7 +9,8 @@ const app = express();
 // CORS
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: "http://localhost:3001", // Allow frontend to access backend
+    methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
 );
@@ -27,5 +28,8 @@ app.use(express.static("public"));
 
 // COOKIE PARSER to use crud operation on special cookies
 app.use(cookieParser());
+
+import userRouter from "./routes/user.routes.js";
+app.use("/api/v1/users", userRouter);
 
 export { app };

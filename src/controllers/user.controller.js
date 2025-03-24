@@ -1,34 +1,29 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import mongoose from "mongoose";
+import crypto from "crypto";
+import sendEmail from "../utils/sendEmail.js";
 
 // ACCESS AND REFRESH TOKEN GENERATER
 const generateAccessAndRefreshToken = async (id) => {
   try {
-    const user = await User.findById(id);
+    console.log("User ID received for token generation:", id); // Debug log
 
+    const user = await User.findById(id);
     if (!user) {
-      throw new ApiError("Something went wrong", 500);
+      throw new ApiError("User not found", 404); // Change error message for clarity
     }
 
-    const accessToken = user.generateAcessToken();
+    const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
 
-    // console.log(accessToken,refreshToken)
-    // update the refresh token in user object
     user.refreshToken = refreshToken;
-
-    // save the user in DB
-    // don't validate the user otherwise it will expect a password
     await user.save({ validateBeforeSave: false });
 
-    // return access and refresh token
     return { accessToken, refreshToken };
   } catch (error) {
-    // console.error('Error generating tokens:', error);
+    console.error("Error generating tokens:", error);
     throw new ApiError("Error creating access and refresh token", 500);
   }
 };
@@ -38,7 +33,7 @@ const registerUser = asyncHandler(async (req, res) => {
   const { username, email, role, password } = req.body;
 
   // validation - fields not empty string
-  if (!username || !role || !email || !password) {
+  if (!username || !email || !password) {
     throw new ApiError("All fields are required", 400);
   }
 
@@ -242,30 +237,28 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
-const changePassword = asyncHandler(async (req, res) => {
-  // take old password from req.body
-  const { oldPassword, newPassword } = req.body;
+const resetPassword = asyncHandler(async (req, res) => {
+  const { token } = req.params;
+  const { newPassword } = req.body;
 
-  // check if old password and new password are provided
-  if (!oldPassword || !newPassword) {
-    throw new ApiError("Old and New Password are required", 400);
-  }
+  // Hash the token before lookup
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
-  // get user from req.user using middleware validate JWT
-  const user = await User.findById(req.user._id);
+  // Find user with matching token and check expiration
+  const user = await User.findOne({
+    resetPasswordToken: hashedToken,
+    resetPasswordExpire: { $gt: Date.now() },
+  });
+
   if (!user) {
     throw new ApiError("User not found", 404);
   }
 
-  // check old password
-  const isOldPasswordCorrect = await user.isPasswordCorrect(oldPassword);
-  if (!isOldPasswordCorrect) {
-    throw new ApiError("Old password is incorrect", 400);
-  }
-
   // change password
   user.password = newPassword;
-  await user.save({ validateBeforeSave: false });
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpire = undefined;
+  await user.save();
 
   // return success response
   return res.status(200).json(
@@ -279,29 +272,67 @@ const changePassword = asyncHandler(async (req, res) => {
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
-    // get user from req.user using middleware validate JWT
-    const user
-     = await User.findById(req.user._id).select("-password -refreshToken");
+  // get user from req.user using middleware validate JWT
+  const user
+   = await User.findById(req.user._id).select("-password -refreshToken");
+  if (!user) {
+    throw new ApiError("User not found", 404);
+  }
+  // return success response
+  return res.status(200).json(
+    new ApiResponse(
+      {
+        user,
+      },
+      200
+    )
+  );
+}
+);
+
+const forgotPassword = asyncHandler(async (req, res) => {
+  try {
+    console.log("Forgot password request received:", req.body);
+
+    const { email } = req.body;
+    if (!email) {
+      throw new ApiError("Email is required", 400);
+    }
+
+    const user = await User.findOne({ email });
     if (!user) {
       throw new ApiError("User not found", 404);
     }
-    // return success response
-    return res.status(200).json(
-      new ApiResponse(
-        {
-          user,
-        },
-        200
-      )
-    );
+
+    const resetToken = user.getResetPasswordToken();
+    await user.save({ validateBeforeSave: false });
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    const message = `Click the link below to reset your password: \n\n${resetUrl}\n\nThis link is valid for 10 minutes.`;
+
+    await sendEmail({
+      email: email,
+      subject: "Password Reset",
+      message,
+    });
+
+    console.log("Email sent successfully");
+
+    res
+      .status(200)
+      .json(new ApiResponse({ message: "Password reset email sent" }, 200));
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    throw new ApiError("Something went wrong. Try again later.", 500);
   }
-);
+});
 
 export {
   registerUser,
   loginUser,
   logoutUser,
   refreshAccessToken,
-  changePassword,
+  forgotPassword,
   getCurrentUser,
+  resetPassword,
 };
