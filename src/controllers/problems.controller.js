@@ -30,7 +30,14 @@ const createProblems = asyncHandler(async (req, res) => {
 const getProblems = asyncHandler(async (req, res) => {
   try {
     const problems = await Problem.find();
-    return res.status(200).json(new ApiResponse(problems, 200));
+    const formattedProblems = problems.map(problem => ({
+      _id: problem._id.toString(),
+      title: problem.title,
+      difficulty: problem.difficulty,
+      category: problem.category,
+      videoId: problem.videoId || null,
+  }));
+    return res.status(200).json(new ApiResponse(formattedProblems, 200));
   } catch (error) {
     throw new ApiError(`error getting problems: ${error.message}`, 400);
   }
