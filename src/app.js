@@ -10,7 +10,7 @@ const app = express();
 // CORS
 app.use(
   cors({
-    origin: "http://localhost:3001",
+    origin: "http://localhost:3000",
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
@@ -32,6 +32,8 @@ app.use(cookieParser());
 
 import userRouter from "./routes/user.routes.js";
 app.use("/api/v1/users", userRouter);
+import problemsRouter from "./routes/problems.routes.js";
+app.use("/api/v1/problems", problemsRouter);
 
 // ERROR HANDLER middleware
 app.use(errorHandler);

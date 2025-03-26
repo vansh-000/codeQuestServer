@@ -32,7 +32,7 @@ const ProblemSchema = new mongoose.Schema({
   },
   link: {
     type: String,
-    required: true,
+    required: false,
     validate: {
       validator: function (v) {
         return /^https?:\/\/.+\..+/.test(v);
