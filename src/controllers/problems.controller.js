@@ -6,8 +6,7 @@ import Problem from "../models/problems.model.js";
 const createProblems = asyncHandler(async (req, res) => {
   // get all data
   try {
-    const { title, category, difficulty, likes, dislikes, videoId} =
-      req.body;
+    const { title, category, difficulty, likes, dislikes, videoId } = req.body;
     const problem = new Problem({
       title,
       category,
@@ -28,4 +27,33 @@ const createProblems = asyncHandler(async (req, res) => {
   }
 });
 
-export { createProblems };
+const getProblems = asyncHandler(async (req, res) => {
+  try {
+    const problems = await Problem.find();
+    return res.status(200).json(new ApiResponse(problems, 200));
+  } catch (error) {
+    throw new ApiError(`error getting problems: ${error.message}`, 400);
+  }
+});
+
+const getProblemById = asyncHandler(async (req, res) => {
+  try {
+    const problem = await Problem.findById(req.params.id);
+    return res.status(200).json(new ApiResponse(problem, 200));
+  } catch (error) {
+    throw new ApiError(`error getting problem: ${error.message}`, 400);
+  }
+});
+
+const updateProblem = asyncHandler(async (req, res) => {
+  try {
+    const problem = await Problem.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    return res.status(200).json(new ApiResponse(problem, 200));
+  } catch (error) {
+    throw new ApiError(`error updating problem: ${error.message}`, 400);
+  }
+});
+
+export { createProblems, getProblems, getProblemById, updateProblem };

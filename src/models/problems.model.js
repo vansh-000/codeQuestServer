@@ -26,6 +26,10 @@ const ProblemSchema = new mongoose.Schema({
     default: 0,
     min: 0,
   },
+  order: {
+    type: Number,
+    required: false,
+  },
   videoId: {
     type: String,
     required: true,

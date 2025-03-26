@@ -10,7 +10,7 @@ export const validateJWT = asyncHandler(async (req, res, next) => {
       req.cookies?.accessToken ||
       req.header("Authorization")?.replace("Bearer ", "");
     if (!token) {
-      throw new ApiError("Unauthorized tokens", 401);
+      throw new ApiError("token not found", 401);
     }
     const decoded = await jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     // access token has a field called _id
