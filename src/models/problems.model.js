@@ -1,5 +1,16 @@
 import mongoose from "mongoose";
 
+const TestCaseSchema = new mongoose.Schema({
+  input: {
+    type: mongoose.Schema.Types.Mixed,
+    required: true,
+  },
+  expectedOutput: {
+    type: mongoose.Schema.Types.Mixed,
+    required: true,
+  },
+});
+
 const ProblemSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -16,6 +27,26 @@ const ProblemSchema = new mongoose.Schema({
     required: true,
     enum: ["Easy", "Medium", "Hard"],
   },
+  description: {
+    type: String,
+    required: true,
+  },
+  examples: {
+    type: Array,
+    required: true,
+  },
+  constraints: {
+    type: Array,
+    required: true,
+  },
+  testCases: {
+    type: [TestCaseSchema],
+    required: true,
+  },
+  starterCode: {
+    type: String,
+    required: true,
+  },
   likes: {
     type: Number,
     default: 0,
@@ -28,23 +59,14 @@ const ProblemSchema = new mongoose.Schema({
   },
   order: {
     type: Number,
-    required: false,
+    required: true,
   },
   videoId: {
     type: String,
     required: true,
   },
-  link: {
-    type: String,
-    required: false,
-    validate: {
-      validator: function (v) {
-        return /^https?:\/\/.+\..+/.test(v);
-      },
-      message: "Invalid URL format",
-    },
-  },
 });
 
 const Problem = mongoose.model("Problem", ProblemSchema);
+
 export default Problem;
