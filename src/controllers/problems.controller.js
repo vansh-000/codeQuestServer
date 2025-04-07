@@ -39,8 +39,8 @@ const createProblems = asyncHandler(async (req, res) => {
     const formattedConstraints = Array.isArray(constraints) ? constraints : [];
     const formattedTestCases = Array.isArray(testCases)
       ? testCases.map((tc) => ({
-          input: Array.isArray(tc.input) ? tc.input.map(String) : [],
-          expectedOutput: tc.expectedOutput,
+          input: typeof tc.input === 'string' ? tc.input : "",
+          output: tc.output,
         }))
       : [];
 
@@ -71,8 +71,8 @@ const createProblems = asyncHandler(async (req, res) => {
 
 const getProblems = asyncHandler(async (req, res) => {
   try {
-    const problems = await Problem.find(); 
-
+    const problems = await Problem.find();
+    
     const formattedProblems = problems.map((problem) => ({
       _id: problem._id.toString(),
       title: problem.title,
@@ -114,8 +114,8 @@ const updateProblem = asyncHandler(async (req, res) => {
 
     if (updatedData.testCases) {
       updatedData.testCases = updatedData.testCases.map((tc) => ({
-        input: Array.isArray(tc.input) ? tc.input.map(String) : [],
-        expectedOutput: tc.expectedOutput,
+        input: typeof tc.input === 'string' ? tc.input : "",
+        output: tc.output,
       }));
     }
 
