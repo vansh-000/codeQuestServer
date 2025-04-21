@@ -14,6 +14,7 @@ const createProblems = asyncHandler(async (req, res) => {
       constraints,
       testCases,
       starterCode,
+      helperCode,
       likes,
       dislikes,
       order,
@@ -28,6 +29,7 @@ const createProblems = asyncHandler(async (req, res) => {
       !examples ||
       !constraints ||
       !testCases ||
+      !helperCode||
       !starterCode ||
       !videoId ||
       order === undefined
@@ -53,6 +55,7 @@ const createProblems = asyncHandler(async (req, res) => {
       constraints: formattedConstraints,
       testCases: formattedTestCases,
       starterCode,
+      helperCode,
       likes: likes || 0,
       dislikes: dislikes || 0,
       order,
@@ -82,6 +85,7 @@ const getProblems = asyncHandler(async (req, res) => {
       examples: problem.examples,
       constraints: problem.constraints,
       testCases: problem.testCases,
+      helperCode: problem.helperCode,
       starterCode: problem.starterCode,
       likes: problem.likes || 0,
       dislikes: problem.dislikes || 0,

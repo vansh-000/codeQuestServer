@@ -47,6 +47,10 @@ const ProblemSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  helperCode: {
+    type: String,
+    required: true,
+  },
   likes: {
     type: Number,
     default: 0,
