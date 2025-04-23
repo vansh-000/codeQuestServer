@@ -32,16 +32,44 @@ export const editSubmission = async (req, res) => {
   }
 };
 
-export const getTotalScoreByUser = async (req, res) => {
+// total score of each users
+export const getScore = async (req, res) => {
   try {
-    const { userId } = req.params;
-    const result = await Submission.aggregate([
-      { $match: { user: new mongoose.Types.ObjectId(userId) } },
-      { $group: { _id: "$user", totalScore: { $sum: "$score" } } },
+    const scores = await Submission.aggregate([
+      {
+        $group: {
+          _id: "$user",
+          totalScore: { $sum: "$score" },
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "userDetails",
+        },
+      },
+      {
+        $unwind: "$userDetails",
+      },
+      {
+        $project: {
+          _id: 1,
+          totalScore: 1,
+          name: "$userDetails.name",
+        },
+      },
     ]);
-    res.status(200).json(result[0] || { totalScore: 0 });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch total score", error });
+
+    if (!scores.length) {
+      return res.status(200).json({ message: "No submissions found", data: [] });
+    }
+
+    res.status(200).json({ message: "Scores fetched successfully", data: scores });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch scores" });
   }
 };
 
