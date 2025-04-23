@@ -34,6 +34,8 @@ import userRouter from "./routes/user.routes.js";
 app.use("/api/v1/users", userRouter);
 import problemsRouter from "./routes/problems.routes.js";
 app.use("/api/v1/problems", problemsRouter);
+import submissionRouter from "./routes/submission.routes.js";
+app.use("/api/v1/submissions", submissionRouter);
 
 // ERROR HANDLER middleware
 app.use(errorHandler);
