@@ -29,7 +29,7 @@ const createProblems = asyncHandler(async (req, res) => {
       !examples ||
       !constraints ||
       !testCases ||
-      !helperCode||
+      !helperCode ||
       !starterCode ||
       !videoId ||
       order === undefined
@@ -41,7 +41,7 @@ const createProblems = asyncHandler(async (req, res) => {
     const formattedConstraints = Array.isArray(constraints) ? constraints : [];
     const formattedTestCases = Array.isArray(testCases)
       ? testCases.map((tc) => ({
-          input: typeof tc.input === 'string' ? tc.input : "",
+          input: typeof tc.input === "string" ? tc.input : "",
           output: tc.output,
         }))
       : [];
@@ -75,7 +75,7 @@ const createProblems = asyncHandler(async (req, res) => {
 const getProblems = asyncHandler(async (req, res) => {
   try {
     const problems = await Problem.find();
-    
+
     const formattedProblems = problems.map((problem) => ({
       _id: problem._id.toString(),
       title: problem.title,
@@ -99,10 +99,22 @@ const getProblems = asyncHandler(async (req, res) => {
   }
 });
 
-
 const getProblemById = asyncHandler(async (req, res) => {
   try {
     const problem = await Problem.findById(req.params.id);
+    if (!problem) {
+      throw new ApiError("Problem not found", 404);
+    }
+    return res.status(200).json(new ApiResponse(problem, 200));
+  } catch (error) {
+    throw new ApiError(`Error fetching problem: ${error.message}`, 400);
+  }
+});
+
+const getElementByOrder = asyncHandler(async (req, res) => {
+  try {
+    const { order } = req.params;
+    const problem = await Problem.findOne({ order: parseInt(order) });
     if (!problem) {
       throw new ApiError("Problem not found", 404);
     }
@@ -118,7 +130,7 @@ const updateProblem = asyncHandler(async (req, res) => {
 
     if (updatedData.testCases) {
       updatedData.testCases = updatedData.testCases.map((tc) => ({
-        input: typeof tc.input === 'string' ? tc.input : "",
+        input: typeof tc.input === "string" ? tc.input : "",
         output: tc.output,
       }));
     }
@@ -139,4 +151,10 @@ const updateProblem = asyncHandler(async (req, res) => {
   }
 });
 
-export { createProblems, getProblems, getProblemById, updateProblem };
+export {
+  createProblems,
+  getProblems,
+  getProblemById,
+  updateProblem,
+  getElementByOrder,
+};
