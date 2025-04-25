@@ -73,15 +73,11 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-  // get data from body
   const { username, email, password } = req.body;
 
-  // check username and email
   if (!username && !email) {
     throw new ApiError("Username or Email is required", 400);
   }
-
-  // find user
   const user = await User.findOne({
     $or: [
       { username: username?.toLowerCase() },
@@ -92,31 +88,23 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError("User not found", 404);
   }
 
-  // authenticate password
   const isValidPassword = await user.isPasswordCorrect(password);
   if (!isValidPassword) {
     throw new ApiError("Invalid credentials", 401);
   }
 
-  // generate acces and refresh tokens
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
     user._id
   );
-
-  // console.log(accessToken,refreshToken)
-
-  // update the user
   const loggedInUser = await User.findByIdAndUpdate(user._id).select(
     "-password -refreshToken"
   );
 
-  // generate cookies
   const cookiesOptions = {
     httpOnly: true,
     secure: true,
   };
 
-  // send cookies
   return res
     .status(200)
     .cookie("accessToken", accessToken, cookiesOptions)
@@ -132,22 +120,14 @@ const loginUser = asyncHandler(async (req, res) => {
 
 const logoutUser = asyncHandler(async (req, res) => {
   try {
-    // we don't have the access of the user so we will take a middleware that
-    // takes accessToken and finds the user and injects the user in req
-
+    console.log("Logout request received:", req.user);
     await User.findByIdAndUpdate(
-      // taking access of user form req.user
       req.user._id,
       {
-        // $set: {
-        //     refreshToken: undefined,
-        // },
-        // instead of setting the refreshToken to undefined we will unset the value of refreshToken
         $unset: {
           refreshToken: 1,
         },
       },
-      // get the updated user
       {
         new: true,
       }
@@ -157,9 +137,6 @@ const logoutUser = asyncHandler(async (req, res) => {
       httpOnly: true,
       secure: true,
     };
-
-    // clear the cookies
-
     return res
       .status(200)
       .clearCookie("accessToken", cookiesOptions)
@@ -173,25 +150,17 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 // generating a new access token if refereshToken exists
 const refreshAccessToken = asyncHandler(async (req, res) => {
-  // store incomming referesh token
 
   const incommingRefreshToken =
     req.cookies.refreshToken || req.body.refreshToken;
 
-  // if refreshToken exists verify if its correct
-
   if (!incommingRefreshToken) {
     throw new ApiError("Refresh Token expired", 401);
   }
-
-  // verify the token
-
   const decoded = await jwt.verify(
     incommingRefreshToken,
     process.env.REFRESH_TOKEN_SECRET
   );
-
-  // if correct make db call to get user
 
   try {
     const user = await User.findById(decoded._id);
@@ -199,26 +168,18 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     if (!user) {
       throw new ApiError("Refresh Token expired", 401);
     }
-
-    // check if user has a valid refershToken
-
     if (incommingRefreshToken != user?.refreshToken) {
       throw new ApiError("Refresh Token expired", 401);
     }
-
-    // generate new accessToken and refreshToken
-
     const { newAccessToken, newRefreshToken } = generateAccessAndRefreshToken(
       user._id
     );
 
-    // generate cookiesOptions
     const cookiesOptions = {
       httpOnly: true,
       secure: true,
     };
 
-    // respond with new accessToken and refreshToken
     return res
       .status(200)
       .cookie("accessToken", newAccessToken, cookiesOptions)

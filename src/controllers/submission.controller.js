@@ -70,21 +70,21 @@ export const getScore = async (req, res) => {
       {
         $group: {
           _id: "$user",
-          totalScore: { $sum: "$score" }
+          totalScore: { $sum: "$score" },
         },
       },
       {
         $lookup: {
           from: "users",
           localField: "_id",
-          foreignField: "_id", 
+          foreignField: "_id",
           as: "userDetails",
         },
       },
       {
         $unwind: {
           path: "$userDetails",
-          preserveNullAndEmptyArrays: true
+          preserveNullAndEmptyArrays: true,
         },
       },
       {
@@ -95,10 +95,10 @@ export const getScore = async (req, res) => {
         },
       },
       {
-        $sort: { totalScore: -1 }, 
+        $sort: { totalScore: -1 },
       },
     ]);
-    
+
     console.log("Aggregated scores:", scores);
 
     res.status(200).json({
@@ -109,7 +109,9 @@ export const getScore = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in getScore:", error);
-    res.status(500).json({ message: "Failed to fetch scores", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to fetch scores", error: error.message });
   }
 };
 
@@ -136,6 +138,35 @@ export const modifyScore = async (req, res) => {
     res.status(200).json(updated);
   } catch (error) {
     res.status(500).json({ message: "Failed to modify score", error });
+  }
+};
+
+// find submission by userId and problemId
+export const getSubmissionByUserAndProblem = async (req, res) => {
+  try {
+    const { userId, problemId } = req.params;
+
+    if (
+      !mongoose.Types.ObjectId.isValid(userId) ||
+      !mongoose.Types.ObjectId.isValid(problemId)
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Invalid user ID or problem ID format" });
+    }
+
+    const submission = await Submission.findOne({
+      user: new mongoose.Types.ObjectId(userId),
+      problem: new mongoose.Types.ObjectId(problemId),
+    });
+
+    if (!submission) {
+      return res.status(200).json({ message: false, submission: null });
+    }
+
+    res.status(200).json({ message: true, submission });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch submission", error });
   }
 };
 

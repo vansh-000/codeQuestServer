@@ -1,4 +1,3 @@
-
 import express from "express";
 import {
   createSubmission,
@@ -7,6 +6,7 @@ import {
   modifyScore,
   getUserScoreByProblem,
   getScore,
+  getSubmissionByUserAndProblem,
 } from "../controllers/submission.controller.js";
 
 const router = express.Router();
@@ -17,5 +17,6 @@ router.put("/:id", editSubmission);
 router.get("/scores", getScore);
 router.patch("/:id/score", modifyScore);
 router.get("/user/:userId/problem-scores", getUserScoreByProblem);
+router.get("/user/:userId/problem/:problemId", getSubmissionByUserAndProblem);
 
 export default router;

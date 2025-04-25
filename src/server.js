@@ -16,8 +16,6 @@ async function compileAndRunRawCode(code) {
   const boilerplate = `#include <bits/stdc++.h>\nusing namespace std;\n`;
 
   fs.writeFileSync(srcPath, boilerplate + code, "utf8");
-  // console.log("✅ Code written:", boilerplate + code);
-  // console.log("✅ Code written to file.");
 
   function cleanup() {
     [srcPath, binPath].forEach((f) => {
@@ -32,7 +30,6 @@ async function compileAndRunRawCode(code) {
   }
 
   try {
-    // Compilation
     await new Promise((resolve, reject) => {
       exec(
         `g++ "${srcPath}" -O2 -std=c++17 -o "${binPath}"`,
@@ -47,7 +44,6 @@ async function compileAndRunRawCode(code) {
       );
     });
 
-    // Execution (allow non-zero exit codes)
     const output = await new Promise((resolve) => {
       exec(`"${binPath}"`, { timeout: 5000 }, (err, stdout, stderr) => {
         const combinedOutput = `${stdout.trim()}\n${stderr.trim()}`.trim();
@@ -77,7 +73,6 @@ async function compileAndRunRawCode(code) {
   }
 }
 
-// POST /api/playground/run
 app.post("/api/playground/run", async (req, res) => {
   const { code } = req.body;
 
@@ -100,7 +95,6 @@ app.post("/api/playground/run", async (req, res) => {
   }
 });
 
-// POST /api/playground/submit
 app.post("/api/playground/submit", async (req, res) => {
   const { code } = req.body;
 
@@ -113,7 +107,6 @@ app.post("/api/playground/submit", async (req, res) => {
   try {
     const result = await compileAndRunRawCode(code);
     if (result.success) {
-      //console.log("result::", result);
       if (result.error) {
         return res.json({ success: true, error: true, errors: result.output });
       }
