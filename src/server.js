@@ -16,8 +16,8 @@ async function compileAndRunRawCode(code) {
   const boilerplate = `#include <bits/stdc++.h>\nusing namespace std;\n`;
 
   fs.writeFileSync(srcPath, boilerplate + code, "utf8");
-  console.log("✅ Code written:", boilerplate + code);
-  console.log("✅ Code written to file.");
+  // console.log("✅ Code written:", boilerplate + code);
+  // console.log("✅ Code written to file.");
 
   function cleanup() {
     [srcPath, binPath].forEach((f) => {
@@ -51,17 +51,19 @@ async function compileAndRunRawCode(code) {
     const output = await new Promise((resolve) => {
       exec(`"${binPath}"`, { timeout: 5000 }, (err, stdout, stderr) => {
         const combinedOutput = `${stdout.trim()}\n${stderr.trim()}`.trim();
-        console.log("combinedOutput::",combinedOutput);
+        console.log("combinedOutput::", combinedOutput);
         if (err) {
           console.warn("⚠️ Non-zero exit code:", err.code);
           return resolve({
             success: true,
             output: combinedOutput,
+            error: true,
             exitCode: err?.code ?? 0,
           });
         }
         return resolve({
           success: true,
+          error: false,
           output: combinedOutput,
         });
       });
@@ -71,7 +73,7 @@ async function compileAndRunRawCode(code) {
     return output;
   } catch (err) {
     cleanup();
-    return { success: false, error: err.message };
+    return { success: false, error: true, errors: err.message };
   }
 }
 
@@ -111,7 +113,11 @@ app.post("/api/playground/submit", async (req, res) => {
   try {
     const result = await compileAndRunRawCode(code);
     if (result.success) {
-      return res.json({ success: true, output: result.output });
+      //console.log("result::", result);
+      if (result.error) {
+        return res.json({ success: true, error: true, errors: result.output });
+      }
+      return res.json({ success: true, error: false, output: result.output });
     } else {
       return res.status(400).json({ success: false, error: result.error });
     }
@@ -128,7 +134,7 @@ dbConnect()
       console.error("🔴 Error interacting with database:", error);
     });
 
-    const PORT = process.env.PORT || 5000;
+    const PORT = process.env.PORT || 4020;
     app.listen(PORT, () => {
       console.log(`✅ Server is running on port ${PORT}`);
     });

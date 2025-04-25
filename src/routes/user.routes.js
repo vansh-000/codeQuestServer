@@ -24,9 +24,8 @@ router.post("/reset-password/:token", resetPassword);
 
 // PROTECTED ROUTES
 // validateJWT is a middleware that is injected in the route and the next allows it to execute the next logoutUser
-router.route("/logout").post(validateJWT, logoutUser);
+router.post("/logout", logoutUser);
 router.route("/refresh-token").post(refreshAccessToken);
 router.route("/current-user").get(validateJWT, getCurrentUser);
-
 
 export default router;
