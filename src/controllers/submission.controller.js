@@ -1,9 +1,23 @@
+import mongoose from "mongoose";
 import Submission from "../models/submission.model.js";
-
 
 export const createSubmission = async (req, res) => {
   try {
-    const submission = await Submission.create(req.body);
+    const { userId, problemId } = req.params;
+
+    const submissionData = {
+      ...req.body,
+      user: userId,
+      problem: problemId,
+    };
+
+    if (!submissionData.code || !submissionData.status) {
+      return res.status(400).json({
+        message: "Code and status are required fields",
+      });
+    }
+
+    const submission = await Submission.create(submissionData);
     res.status(201).json(submission);
   } catch (error) {
     res.status(500).json({ message: "Failed to create submission", error });
@@ -13,7 +27,12 @@ export const createSubmission = async (req, res) => {
 export const deleteSubmission = async (req, res) => {
   try {
     const { id } = req.params;
-    await Submission.findByIdAndDelete(id);
+    const deletedSubmission = await Submission.findByIdAndDelete(id);
+
+    if (!deletedSubmission) {
+      return res.status(404).json({ message: "Submission not found" });
+    }
+
     res.status(200).json({ message: "Submission deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: "Failed to delete submission", error });
@@ -23,53 +42,74 @@ export const deleteSubmission = async (req, res) => {
 export const editSubmission = async (req, res) => {
   try {
     const { id } = req.params;
-    const updatedSubmission = await Submission.findByIdAndUpdate(id, req.body, {
-      new: true,
-    });
+
+    const { user, problem, ...updateData } = req.body;
+
+    const updatedSubmission = await Submission.findByIdAndUpdate(
+      id,
+      updateData,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!updatedSubmission) {
+      return res.status(404).json({ message: "Submission not found" });
+    }
+
     res.status(200).json(updatedSubmission);
   } catch (error) {
     res.status(500).json({ message: "Failed to update submission", error });
   }
 };
 
-// total score of each users
 export const getScore = async (req, res) => {
   try {
     const scores = await Submission.aggregate([
       {
         $group: {
           _id: "$user",
-          totalScore: { $sum: "$score" },
+          totalScore: { $sum: "$score" }
         },
       },
       {
         $lookup: {
           from: "users",
           localField: "_id",
-          foreignField: "_id",
+          foreignField: "_id", 
           as: "userDetails",
         },
       },
       {
-        $unwind: "$userDetails",
+        $unwind: {
+          path: "$userDetails",
+          preserveNullAndEmptyArrays: true
+        },
       },
       {
         $project: {
           _id: 1,
           totalScore: 1,
-          name: "$userDetails.name",
+          username: { $ifNull: ["$userDetails.username", "Unknown User"] },
         },
       },
+      {
+        $sort: { totalScore: -1 }, 
+      },
     ]);
+    
+    console.log("Aggregated scores:", scores);
 
-    if (!scores.length) {
-      return res.status(200).json({ message: "No submissions found", data: [] });
-    }
-
-    res.status(200).json({ message: "Scores fetched successfully", data: scores });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch scores" });
+    res.status(200).json({
+      message: scores.length
+        ? "Scores fetched successfully"
+        : "No submissions found",
+      data: scores,
+    });
+  } catch (error) {
+    console.error("Error in getScore:", error);
+    res.status(500).json({ message: "Failed to fetch scores", error: error.message });
   }
 };
 
@@ -77,11 +117,22 @@ export const modifyScore = async (req, res) => {
   try {
     const { id } = req.params;
     const { score } = req.body;
+
+    if (score === undefined || score === null) {
+      return res.status(400).json({ message: "Score is required" });
+    }
+
+    const submission = await Submission.findById(id);
+    if (!submission) {
+      return res.status(404).json({ message: "Submission not found" });
+    }
+
     const updated = await Submission.findByIdAndUpdate(
       id,
       { score },
-      { new: true }
+      { new: true, runValidators: true }
     );
+
     res.status(200).json(updated);
   } catch (error) {
     res.status(500).json({ message: "Failed to modify score", error });
@@ -91,40 +142,51 @@ export const modifyScore = async (req, res) => {
 export const getUserScoreByProblem = async (req, res) => {
   try {
     const { userId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid user ID format" });
+    }
 
     const result = await Submission.aggregate([
-      { $match: { user: new mongoose.Types.ObjectId(userId) } },
+      {
+        $match: { user: new mongoose.Types.ObjectId(userId) },
+      },
       {
         $group: {
           _id: "$problem",
           totalScore: { $sum: "$score" },
+          submissions: { $sum: 1 },
         },
       },
       {
         $lookup: {
-          from: "problems", // Make sure this matches your Problem model's collection name
+          from: "problems",
           localField: "_id",
           foreignField: "_id",
-          as: "problem",
+          as: "problemDetails",
         },
       },
       {
-        $unwind: "$problem",
+        $unwind: "$problemDetails",
       },
       {
         $project: {
-          _id: 0,
-          problemId: "$problem._id",
-          problemTitle: "$problem.title",
+          problemId: "$_id",
+          problemTitle: "$problemDetails.title",
           totalScore: 1,
+          submissions: 1,
+          _id: 0,
         },
+      },
+      {
+        $sort: { totalScore: -1 },
       },
     ]);
 
     res.status(200).json(result);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Failed to fetch user's score by problem", error });
+    res.status(500).json({
+      message: "Failed to fetch user's score by problem",
+      error: error.message,
+    });
   }
 };

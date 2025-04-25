@@ -1,3 +1,4 @@
+
 import express from "express";
 import {
   createSubmission,
@@ -10,10 +11,10 @@ import {
 
 const router = express.Router();
 
-router.post("/", createSubmission);
+router.post("/user/:userId/problem/:problemId", createSubmission);
 router.delete("/:id", deleteSubmission);
 router.put("/:id", editSubmission);
-router.get("/user/scores", getScore);
+router.get("/scores", getScore);
 router.patch("/:id/score", modifyScore);
 router.get("/user/:userId/problem-scores", getUserScoreByProblem);
 
