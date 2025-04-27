@@ -15,10 +15,7 @@ const createProblems = asyncHandler(async (req, res) => {
       testCases,
       starterCode,
       helperCode,
-      likes,
-      dislikes,
       order,
-      videoId,
     } = req.body;
 
     if (
@@ -31,7 +28,6 @@ const createProblems = asyncHandler(async (req, res) => {
       !testCases ||
       !helperCode ||
       !starterCode ||
-      !videoId ||
       order === undefined
     ) {
       throw new ApiError("All required fields must be provided", 400);
@@ -56,10 +52,7 @@ const createProblems = asyncHandler(async (req, res) => {
       testCases: formattedTestCases,
       starterCode,
       helperCode,
-      likes: likes || 0,
-      dislikes: dislikes || 0,
       order,
-      videoId,
     });
 
     await problem.save();

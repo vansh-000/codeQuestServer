@@ -55,10 +55,6 @@ const ProblemSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  videoId: {
-    type: String,
-    required: true,
-  },
 });
 
 const Problem = mongoose.model("Problem", ProblemSchema);
