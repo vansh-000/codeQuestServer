@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Submission from "../models/submission.model.js";
+import { User } from "../models/user.model.js";
 
 export const createSubmission = async (req, res) => {
   try {
@@ -170,54 +171,88 @@ export const getSubmissionByUserAndProblem = async (req, res) => {
   }
 };
 
-export const getUserScoreByProblem = async (req, res) => {
+// export const getUserScoreByProblem = async (req, res) => {
+//   try {
+//     const { userId } = req.params;
+//     if (!mongoose.Types.ObjectId.isValid(userId)) {
+//       return res.status(400).json({ message: "Invalid user ID format" });
+//     }
+
+//     const result = await Submission.aggregate([
+//       {
+//         $match: { user: new mongoose.Types.ObjectId(userId) },
+//       },
+//       {
+//         $group: {
+//           _id: "$problem",
+//           totalScore: { $sum: "$score" },
+//           submissions: { $sum: 1 },
+//         },
+//       },
+//       {
+//         $lookup: {
+//           from: "problems",
+//           localField: "_id",
+//           foreignField: "_id",
+//           as: "problemDetails",
+//         },
+//       },
+//       {
+//         $unwind: "$problemDetails",
+//       },
+//       {
+//         $project: {
+//           problemId: "$_id",
+//           problemTitle: "$problemDetails.title",
+//           totalScore: 1,
+//           submissions: 1,
+//           _id: 0,
+//         },
+//       },
+//       {
+//         $sort: { totalScore: -1 },
+//       },
+//     ]);
+
+//     res.status(200).json(result);
+//   } catch (error) {
+//     res.status(500).json({
+//       message: "Failed to fetch user's score by problem",
+//       error: error.message,
+//     });
+//   }
+// };
+
+export const getSubmissionsofUser = async (req, res) => {
   try {
     const { userId } = req.params;
+
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ message: "Invalid user ID format" });
     }
 
-    const result = await Submission.aggregate([
-      {
-        $match: { user: new mongoose.Types.ObjectId(userId) },
-      },
-      {
-        $group: {
-          _id: "$problem",
-          totalScore: { $sum: "$score" },
-          submissions: { $sum: 1 },
-        },
-      },
-      {
-        $lookup: {
-          from: "problems",
-          localField: "_id",
-          foreignField: "_id",
-          as: "problemDetails",
-        },
-      },
-      {
-        $unwind: "$problemDetails",
-      },
-      {
-        $project: {
-          problemId: "$_id",
-          problemTitle: "$problemDetails.title",
-          totalScore: 1,
-          submissions: 1,
-          _id: 0,
-        },
-      },
-      {
-        $sort: { totalScore: -1 },
-      },
-    ]);
+    const name = await User.findById(userId);
+    if (!name) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const user = await User.findById(userId).select("username");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    res.status(200).json(result);
-  } catch (error) {
-    res.status(500).json({
-      message: "Failed to fetch user's score by problem",
-      error: error.message,
+    const submissions = await Submission.find({ user: userId }).populate(
+      "user"
+    );
+
+    if (!submissions || submissions.length === 0) {
+      return res.status(404).json({ message: "No submissions found" });
+    }
+
+    res.status(200).json({
+      username: user.username,
+      submissions,
     });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch submissions", error });
   }
 };
