@@ -12,20 +12,15 @@ import { validateJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-// register router
-router.route("/register").post(registerUser);
-
-// login router
-router.route("/login").post(loginUser);
-
-// reset password router
+// PUBLIC ROUTES
+router.post("/register", registerUser);
+router.post("/login", loginUser);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
+router.post("/logout", logoutUser);
+router.post("/refresh-token", refreshAccessToken);
 
 // PROTECTED ROUTES
-// validateJWT is a middleware that is injected in the route and the next allows it to execute the next logoutUser
-router.post("/logout", logoutUser);
-router.route("/refresh-token").post(refreshAccessToken);
-router.route("/current-user").get(validateJWT, getCurrentUser);
+router.get("/current-user", validateJWT, getCurrentUser);
 
 export default router;
