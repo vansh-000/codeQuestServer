@@ -119,11 +119,16 @@ export const getScore = async (req, res) => {
 export const modifyScore = async (req, res) => {
   try {
     const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid submission ID format" });
+    }
     const { score } = req.body;
-
     if (score === undefined || score === null) {
       return res.status(400).json({ message: "Score is required" });
     }
+
+    console.log("Score to update:", score);
+    console.log("Submission ID:", id);
 
     const submission = await Submission.findById(id);
     if (!submission) {
@@ -231,17 +236,14 @@ export const getSubmissionsofUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid user ID format" });
     }
 
-    const name = await User.findById(userId);
-    if (!name) {
-      return res.status(404).json({ message: "User not found" });
-    }
     const user = await User.findById(userId).select("username");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     const submissions = await Submission.find({ user: userId }).populate(
-      "user"
+      "problem",
+      "title"
     );
 
     if (!submissions || submissions.length === 0) {
