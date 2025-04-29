@@ -20,10 +20,11 @@ using namespace std;
 `,
   python: `# Python code starts here
 `,
-  java: `public class Main {
-    public static void main(String[] args) {
+  java: `
+  import java.util.*;
+  class Main {
 `,
-  javaFooter: `    }
+  javaFooter: `
 }`,
 };
 
@@ -50,6 +51,7 @@ const RUN_COMMANDS = {
 
 function prepareSourceCode(code, language) {
   console.log("before prepareSourceCode:", code);
+  console.log("language:", language);
   switch (language) {
     case "cpp":
     case "c":
@@ -161,7 +163,7 @@ async function compileAndRunCode(code, language) {
   }
 
   const preparedCode = prepareSourceCode(code, language);
-  console.log("prepareSourceCode:", code);
+  console.log("prepareSourceCode:", preparedCode);
   fs.writeFileSync(srcPath, preparedCode, "utf8");
 
   const filesToCleanup = [srcPath, binPath];
