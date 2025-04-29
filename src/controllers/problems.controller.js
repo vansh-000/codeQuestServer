@@ -13,8 +13,7 @@ const createProblems = asyncHandler(async (req, res) => {
       examples,
       constraints,
       testCases,
-      starterCode,
-      helperCode,
+      codes,
       order,
     } = req.body;
 
@@ -26,8 +25,7 @@ const createProblems = asyncHandler(async (req, res) => {
       !examples ||
       !constraints ||
       !testCases ||
-      !helperCode ||
-      !starterCode ||
+      !codes ||
       order === undefined
     ) {
       throw new ApiError("All required fields must be provided", 400);
@@ -35,10 +33,19 @@ const createProblems = asyncHandler(async (req, res) => {
 
     const formattedExamples = Array.isArray(examples) ? examples : [];
     const formattedConstraints = Array.isArray(constraints) ? constraints : [];
+
     const formattedTestCases = Array.isArray(testCases)
       ? testCases.map((tc) => ({
           input: typeof tc.input === "string" ? tc.input : "",
           output: tc.output,
+        }))
+      : [];
+
+    const formattedCodes = Array.isArray(codes)
+      ? codes.map((code) => ({
+          language: code.language,
+          starterCode: code.starterCode,
+          helperCode: code.helperCode,
         }))
       : [];
 
@@ -50,8 +57,7 @@ const createProblems = asyncHandler(async (req, res) => {
       examples: formattedExamples,
       constraints: formattedConstraints,
       testCases: formattedTestCases,
-      starterCode,
-      helperCode,
+      codes: formattedCodes,
       order,
     });
 
@@ -78,12 +84,8 @@ const getProblems = asyncHandler(async (req, res) => {
       examples: problem.examples,
       constraints: problem.constraints,
       testCases: problem.testCases,
-      helperCode: problem.helperCode,
-      starterCode: problem.starterCode,
-      likes: problem.likes || 0,
-      dislikes: problem.dislikes || 0,
+      codes: problem.codes,
       order: problem.order,
-      videoId: problem.videoId ? problem.videoId : null,
     }));
 
     return res.status(200).json(new ApiResponse(formattedProblems, 200));
@@ -125,6 +127,14 @@ const updateProblem = asyncHandler(async (req, res) => {
       updatedData.testCases = updatedData.testCases.map((tc) => ({
         input: typeof tc.input === "string" ? tc.input : "",
         output: tc.output,
+      }));
+    }
+
+    if (updatedData.codes) {
+      updatedData.codes = updatedData.codes.map((code) => ({
+        language: code.language,
+        starterCode: code.starterCode,
+        helperCode: code.helperCode,
       }));
     }
 

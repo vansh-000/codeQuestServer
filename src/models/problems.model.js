@@ -11,6 +11,21 @@ const TestCaseSchema = new mongoose.Schema({
   },
 });
 
+const LanguageSchema = new mongoose.Schema({
+  language: {
+    type: String,
+    required: true,
+  },
+  starterCode: {
+    type: String,
+    required: true,
+  },
+  helperCode: {
+    type: String,
+    required: true,
+  },
+});
+
 const ProblemSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -43,12 +58,8 @@ const ProblemSchema = new mongoose.Schema({
     type: [TestCaseSchema],
     required: true,
   },
-  starterCode: {
-    type: String,
-    required: true,
-  },
-  helperCode: {
-    type: String,
+  codes: {
+    type: [LanguageSchema],
     required: true,
   },
   order: {
