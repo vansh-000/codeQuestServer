@@ -148,6 +148,7 @@ async function compileAndRunCode(code, language) {
     return {
       success: false,
       error: true,
+      status: "Unsupported Language",
       errors: `Unsupported language: ${language}. Supported languages are: C++, C, Python, and Java.`,
     };
   }
@@ -182,7 +183,12 @@ async function compileAndRunCode(code, language) {
     return output;
   } catch (err) {
     cleanup(filesToCleanup);
-    return { success: false, error: true, errors: err.message };
+    return { 
+      success: true, 
+      error: true, 
+      status: "Compilation Error",
+      errors: err.message 
+    };
   }
 }
 
@@ -190,21 +196,34 @@ app.post("/api/playground/run", async (req, res) => {
   const { code, language = "cpp" } = req.body;
 
   if (typeof code !== "string") {
-    return res
-      .status(400)
-      .json({ success: false, message: "Code must be a string." });
+    return res.json({ 
+      success: true, 
+      error: true,
+      status: "Invalid Input",
+      errors: "Code must be a string." 
+    });
   }
 
   try {
     const result = await compileAndRunCode(code, language.toLowerCase());
-    if (result.success) {
-      return res.json({ success: true, output: result.output });
+    if (result.error) {
+      return res.json({ 
+        success: true, 
+        error: true, 
+        status: result.status || "Runtime Error", 
+        errors: result.errors || result.output || "An error occurred during execution."
+      });
     } else {
-      return res.status(400).json({ success: false, error: result.error });
+      return res.json({ success: true, error: false, output: result.output });
     }
   } catch (err) {
     console.error(`Error in /run (${language}):`, err);
-    return res.status(500).json({ success: false, message: err.message });
+    return res.json({ 
+      success: true, 
+      error: true, 
+      status: "Server Error",
+      errors: err.message || "An unexpected error occurred." 
+    });
   }
 });
 
@@ -212,24 +231,39 @@ app.post("/api/playground/submit", async (req, res) => {
   const { code, language = "cpp" } = req.body;
 
   if (typeof code !== "string") {
-    return res
-      .status(400)
-      .json({ success: false, message: "Code must be a string." });
+    return res.json({ 
+      success: true, 
+      error: true,
+      status: "Invalid Input",
+      errors: "Code must be a string." 
+    });
   }
 
   try {
     const result = await compileAndRunCode(code, language.toLowerCase());
-    if (result.success) {
-      if (result.error) {
-        return res.json({ success: true, error: true, errors: result.output });
-      }
-      return res.json({ success: true, error: false, output: result.output });
+    if (result.error) {
+      return res.json({ 
+        success: true, 
+        error: true, 
+        status: result.status || "Wrong Answer",
+        errors: result.errors || result.output || "Your solution produced incorrect results." 
+      });
     } else {
-      return res.status(400).json({ success: false, error: result.error });
+      return res.json({ 
+        success: true, 
+        error: false, 
+        status: "Accepted",
+        output: result.output 
+      });
     }
   } catch (err) {
     console.error(`Error in /submit (${language}):`, err);
-    return res.status(500).json({ success: false, message: err.message });
+    return res.json({ 
+      success: true, 
+      error: true, 
+      status: "Server Error",
+      errors: err.message || "An unexpected error occurred while evaluating your submission."
+    });
   }
 });
 
