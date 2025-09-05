@@ -54,6 +54,7 @@ function prepareSourceCode(code, language) {
   console.log("language:", language);
   switch (language) {
     case "cpp":
+      return BOILERPLATES.cpp + code;
     case "c":
       return BOILERPLATES.c + code;
     case "python":
