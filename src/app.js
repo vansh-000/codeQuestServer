@@ -2,6 +2,8 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import errorHandler from "./middlewares/error.middleware.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 const app = express();
 
@@ -10,7 +12,7 @@ const app = express();
 // CORS
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: process.env.FRONTEND_URL,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true,
   })
