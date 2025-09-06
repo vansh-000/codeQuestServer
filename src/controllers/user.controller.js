@@ -5,6 +5,12 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import crypto from "crypto";
 import sendEmail from "../utils/sendEmail.js";
 
+  const cookiesOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  };
+
 // ACCESS AND REFRESH TOKEN GENERATER
 const generateAccessAndRefreshToken = async (id) => {
   try {
@@ -100,10 +106,7 @@ const loginUser = asyncHandler(async (req, res) => {
     "-password -refreshToken"
   );
 
-  const cookiesOptions = {
-    httpOnly: true,
-    secure: true,
-  };
+
 
   return res
     .status(200)
@@ -132,11 +135,6 @@ const logoutUser = asyncHandler(async (req, res) => {
         new: true,
       }
     );
-
-    const cookiesOptions = {
-      httpOnly: true,
-      secure: true,
-    };
     return res
       .status(200)
       .clearCookie("accessToken", cookiesOptions)
@@ -174,12 +172,6 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     const { newAccessToken, newRefreshToken } = generateAccessAndRefreshToken(
       user._id
     );
-
-    const cookiesOptions = {
-      httpOnly: true,
-      secure: true,
-    };
-
     return res
       .status(200)
       .cookie("accessToken", newAccessToken, cookiesOptions)
