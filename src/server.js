@@ -112,12 +112,13 @@ async function runCode(language, srcPath, binPath, binDir) {
     language === "java"
       ? RUN_COMMANDS[language](binDir)
       : language === "python"
-        ? RUN_COMMANDS[language](srcPath)
-        : RUN_COMMANDS[language](binPath);
+      ? RUN_COMMANDS[language](srcPath)
+      : RUN_COMMANDS[language](binPath);
 
   return new Promise((resolve) => {
     exec(runCommand, { timeout: 5000 }, (err, stdout, stderr) => {
       const combinedOutput = `${stdout.trim()}\n${stderr.trim()}`.trim();
+      console.log(`${language} output:`, combinedOutput);
 
       if (err) {
         console.warn(
@@ -162,6 +163,7 @@ async function compileAndRunCode(code, language) {
   }
 
   const preparedCode = prepareSourceCode(code, language);
+  console.log("prepareSourceCode:", preparedCode);
   fs.writeFileSync(srcPath, preparedCode, "utf8");
 
   const filesToCleanup = [srcPath, binPath];
@@ -180,11 +182,11 @@ async function compileAndRunCode(code, language) {
     return output;
   } catch (err) {
     cleanup(filesToCleanup);
-    return {
-      success: true,
-      error: true,
+    return { 
+      success: true, 
+      error: true, 
       status: "Compilation Error",
-      errors: err.message
+      errors: err.message 
     };
   }
 }
@@ -193,21 +195,21 @@ app.post("/api/playground/run", async (req, res) => {
   const { code, language = "cpp" } = req.body;
 
   if (typeof code !== "string") {
-    return res.json({
-      success: true,
+    return res.json({ 
+      success: true, 
       error: true,
       status: "Invalid Input",
-      errors: "Code must be a string."
+      errors: "Code must be a string." 
     });
   }
 
   try {
     const result = await compileAndRunCode(code, language.toLowerCase());
     if (result.error) {
-      return res.json({
-        success: true,
-        error: true,
-        status: result.status || "Runtime Error",
+      return res.json({ 
+        success: true, 
+        error: true, 
+        status: result.status || "Runtime Error", 
         errors: result.errors || result.output || "An error occurred during execution."
       });
     } else {
@@ -215,11 +217,11 @@ app.post("/api/playground/run", async (req, res) => {
     }
   } catch (err) {
     console.error(`Error in /run (${language}):`, err);
-    return res.json({
-      success: true,
-      error: true,
+    return res.json({ 
+      success: true, 
+      error: true, 
       status: "Server Error",
-      errors: err.message || "An unexpected error occurred."
+      errors: err.message || "An unexpected error occurred." 
     });
   }
 });
@@ -228,36 +230,36 @@ app.post("/api/playground/submit", async (req, res) => {
   const { code, language = "cpp" } = req.body;
 
   if (typeof code !== "string") {
-    return res.json({
-      success: true,
+    return res.json({ 
+      success: true, 
       error: true,
       status: "Invalid Input",
-      errors: "Code must be a string."
+      errors: "Code must be a string." 
     });
   }
 
   try {
     const result = await compileAndRunCode(code, language.toLowerCase());
     if (result.error) {
-      return res.json({
-        success: true,
-        error: true,
+      return res.json({ 
+        success: true, 
+        error: true, 
         status: result.status || "Wrong Answer",
-        errors: result.errors || result.output || "Your solution produced incorrect results."
+        errors: result.errors || result.output || "Your solution produced incorrect results." 
       });
     } else {
-      return res.json({
-        success: true,
-        error: false,
+      return res.json({ 
+        success: true, 
+        error: false, 
         status: "Accepted",
-        output: result.output
+        output: result.output 
       });
     }
   } catch (err) {
     console.error(`Error in /submit (${language}):`, err);
-    return res.json({
-      success: true,
-      error: true,
+    return res.json({ 
+      success: true, 
+      error: true, 
       status: "Server Error",
       errors: err.message || "An unexpected error occurred while evaluating your submission."
     });
