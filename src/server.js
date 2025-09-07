@@ -10,7 +10,21 @@ import { app } from "./app.js";
 dotenv.config({ path: "./.env" });
 
 const BOILERPLATES = {
-  cpp: `#include <bits/stdc++.h>
+  cpp: `#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <utility>
+#include <map>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
+#include <queue>
+#include <stack>
+#include <deque>
+#include <cmath>
+#include <limits>
+#include <climits>
 using namespace std;
 `,
   c: `#include <stdio.h>
