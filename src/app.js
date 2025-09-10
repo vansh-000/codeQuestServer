@@ -39,6 +39,9 @@ app.use("/api/v1/problems", problemsRouter);
 import submissionRouter from "./routes/submission.routes.js";
 app.use("/api/v1/submissions", submissionRouter);
 
+import playgroundRouter from "./routes/playground.routes.js";
+app.use("/api/playground", playgroundRouter);
+
 // ERROR HANDLER middleware
 app.use(errorHandler);
 
